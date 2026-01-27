@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Check, X, Plus } from 'lucide-react'
 import { Button } from '@/components/Common/Button'
 import { Badge } from '@/components/Common/Badge'
-import { cn } from '@/lib/utils'  // ← UNCOMMENT THIS LINE
+import { cn } from '@/lib/utils'
 
 const habits = [
   { id: 1, name: 'Wake up at 6AM ⏰', goal: 10, completed: 8, icon: '⏰' },
@@ -17,7 +17,7 @@ const habits = [
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export default function HabitTracker() {
-  const [weekData, setWeekData] = useState({
+  const [weekData, setWeekData] = useState<Record<number, boolean[]>>({
     1: [true, true, false, true, true, false, true],
     2: [true, false, true, true, false, true, true],
     3: [false, true, true, false, true, true, false],
@@ -78,8 +78,8 @@ export default function HabitTracker() {
                         onClick={() => toggleHabit(habit.id, dayIndex)}
                         className={cn(
                           'w-8 h-8 rounded-lg border-2 flex items-center justify-center mx-auto transition-all',
-                          completed 
-                            ? 'bg-primary border-primary text-primary-foreground shadow-sm' 
+                          completed
+                            ? 'bg-primary border-primary text-primary-foreground shadow-sm'
                             : 'border-border hover:border-ring hover:bg-accent'
                         )}
                       >
@@ -90,7 +90,7 @@ export default function HabitTracker() {
                   {/* ✅ USE BADGE HERE - REPLACES PLAIN TEXT */}
                   <td className="py-4 pl-4 text-right">
                     <div className="flex items-center justify-end space-x-2">
-                      <Badge 
+                      <Badge
                         variant={habit.completed === habit.goal ? 'success' : 'warning'}
                         size="sm"
                       >
