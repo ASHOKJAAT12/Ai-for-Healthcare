@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { cn } from '@/lib/utils'
+import { DataProvider } from '@/context/DataProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,7 +22,9 @@ export default function RootLayout({
         'min-h-screen bg-background font-sans antialiased',
         inter.className
       )}>
-        {children}
+        <DataProvider>
+          {children}
+        </DataProvider>
       </body>
     </html>
   )
