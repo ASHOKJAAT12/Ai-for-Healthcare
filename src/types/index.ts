@@ -1,29 +1,35 @@
+// derived from the Login/Signup payloads [cite: 1]
 export interface User {
-  id: string
-  name: string
-  email: string
-  phone: string
-  createdAt: Date
+  _id?: string; // Assuming the DB generates an ID needed for other calls
+  name?: string;
+  email: string;
+  phone?: string;
+  password?: string;
 }
 
-export interface Goal {
-  id: string
-  title: string
-  description: string
-  target: number
-  current: number
-  timeframe: 'week' | 'month' | 'year'
-  userId: string
+// derived from the Goals payload [cite: 1]
+export interface GoalData {
+  title: string;
+  description: string;
+  target: number;
+  timeframe: string;
 }
 
-export interface Habit {
-  id: string
-  name: string
-  icon: string
-  goal: number
-  completed: number
-  category: 'health' | 'study' | 'personal'
-  userId: string
+// derived from the Habits payload 
+export interface HabitData {
+  name: string;
+  icon: string;
+  goal: string;
+  category: string;
+  weekData: {
+    monday: boolean;
+    tuesday: boolean;
+    wednesday: boolean;
+    thursday: boolean;
+    friday: boolean;
+    saturday: boolean;
+    sunday: boolean;
+  };
 }
 
 export interface Task {

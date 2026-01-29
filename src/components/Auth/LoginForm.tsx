@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/Common/Button'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -44,7 +44,7 @@ export default function LoginForm() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-2">Email</label>
-          <input 
+          <input
             type="email"
             {...register('email')}
             className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -52,22 +52,22 @@ export default function LoginForm() {
           />
           {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium mb-2">Password</label>
-          <input 
+          <input
             type="password"
             {...register('password')}
             className="w-full px-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           />
           {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
         </div>
-        
+
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Signing In...' : 'Log In'}
         </Button>
       </form>
-      
+
       <p className="text-center text-sm text-muted-foreground mt-6">
         New user? <a href="/signup" className="text-primary hover:underline font-medium">Create account</a>
       </p>

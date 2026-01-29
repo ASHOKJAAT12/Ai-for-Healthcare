@@ -1,5 +1,5 @@
 'use client'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/context/AuthContext'
 import { Bell, Download, LogOut, User } from 'lucide-react'
 import { Button } from '@/components/Common/Button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/Common/Avatar'
