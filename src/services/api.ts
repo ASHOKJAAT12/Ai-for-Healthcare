@@ -1,3 +1,5 @@
+'use client'
+
 const BASE_URL = 'https://focused-expression-production-e6b3.up.railway.app';
 
 export const api = {
