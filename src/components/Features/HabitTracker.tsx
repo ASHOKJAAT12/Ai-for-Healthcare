@@ -22,6 +22,14 @@ export default function HabitTracker() {
   const today = new Date()
   const weekId = today.getFullYear() + '-' + (today.getMonth() + 1)
 
+  // Helper function to get date for a specific day of the current week
+  const getDateForDayIndex = (dayIndex: number): string => {
+    const currentDay = today.getDay() // 0 = Sunday, 1 = Monday, etc.
+    const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay // Calculate offset to Monday
+    const targetDate = new Date(today)
+    targetDate.setDate(today.getDate() + mondayOffset + dayIndex)
+    return targetDate.toISOString().split('T')[0] // Returns YYYY-MM-DD format
+  }
 
   const calculateStats = () => {
     // Logic to calculate how many habits are completed today, etc.
@@ -101,7 +109,7 @@ export default function HabitTracker() {
                       {currentWeek.map((completed, dayIndex) => (
                         <td key={dayIndex} className="py-4 px-2 text-center">
                           <button
-                            onClick={() => toggleHabitCompletion(habit.id, dayIndex)}
+                            onClick={() => toggleHabitCompletion(String(habit.id), getDateForDayIndex(dayIndex))}
                             className={cn(
                               'w-8 h-8 rounded-lg border-2 flex items-center justify-center mx-auto transition-all',
                               completed

@@ -27,8 +27,3 @@ export const supabaseAdmin = supabaseServiceKey
     })
   : null
 
-// Log for debugging (remove in production)
-if (process.env.NODE_ENV === 'development') {
-  console.log('🔗 Supabase URL:', supabaseUrl)
-  console.log('✅ Supabase client initialized')
-}

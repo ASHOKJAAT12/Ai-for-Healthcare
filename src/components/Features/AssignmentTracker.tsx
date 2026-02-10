@@ -13,26 +13,27 @@ export default function AssignmentTracker() {
     const [newAssignment, setNewAssignment] = useState({
         title: '',
         subject: '',
-        due: '',
+        due_date: '',
         priority: 'Medium' as 'High' | 'Medium' | 'Low',
         status: 'Pending' as 'Pending' | 'In Progress' | 'Completed' | 'Not Started'
     })
 
     const handleAdd = () => {
-        if (!newAssignment.title || !newAssignment.subject || !newAssignment.due) return
+        if (!newAssignment.title || !newAssignment.subject || !newAssignment.due_date) return
 
         addAssignment({
             title: newAssignment.title,
             subject: newAssignment.subject,
-            due: newAssignment.due,
+            due_date: newAssignment.due_date,
             status: newAssignment.status,
-            priority: newAssignment.priority
+            priority: newAssignment.priority,
+            user_id: '' // This will be added by DataProvider
         })
         setIsAddOpen(false)
         setNewAssignment({
             title: '',
             subject: '',
-            due: '',
+            due_date: '',
             priority: 'Medium',
             status: 'Pending'
         })
@@ -81,7 +82,7 @@ export default function AssignmentTracker() {
                                             <div className="flex items-center gap-2 text-sm">
                                                 <Clock className="w-4 h-4 text-primary" />
                                                 {/* Hydration safe date */}
-                                                {new Date(ass.due).toLocaleDateString('en-GB')}
+                                                {new Date(ass.due_date).toLocaleDateString('en-GB')}
                                             </div>
                                         </td>
                                         <td className="p-4">
@@ -134,8 +135,8 @@ export default function AssignmentTracker() {
                             <input
                                 type="date"
                                 className="w-full bg-background border border-input rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary outline-none"
-                                value={newAssignment.due}
-                                onChange={e => setNewAssignment({ ...newAssignment, due: e.target.value })}
+                                value={newAssignment.due_date}
+                                onChange={e => setNewAssignment({ ...newAssignment, due_date: e.target.value })}
                             />
                         </div>
                     </div>
