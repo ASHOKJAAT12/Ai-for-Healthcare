@@ -1,53 +1,19 @@
+// src/context/DataProvider.tsx
 'use client'
-
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { api } from '@/services/api'
-
-// Types
-export type Priority = 'High' | 'Medium' | 'Low'
-export type Status = 'Pending' | 'In Progress' | 'Completed' | 'Not Started'
-type Category = 'Health' | 'Education' | 'Financial' | 'Personal'
-
-export interface Assignment {
-    id: string | number // allow API IDs
-    title: string
-    subject: string
-    due: string
-    priority: Priority
-    status: Status
-}
-
-export interface Habit {
-    id: number | string
-    name: string
-    goal: number // Daily target in component
-    completed: number
-    icon: string
-    weekData?: Record<string, boolean[]>
-    // Helper to store API specific fields if needed
-    category?: string
-}
-
-export interface Goal {
-    id: string
-    title: string
-    category: Category
-    progress: number
-    deadline: string
-    description?: string
-    target?: number
-}
+import { supabase } from '@/lib/supabase'
+import { Assignment, Habit, Goal, HabitCompletion } from '@/types/database'
 
 interface DataContextType {
     assignments: Assignment[]
     habits: Habit[]
     goals: Goal[]
-    addAssignment: (assignment: Omit<Assignment, 'id'>) => void
-    updateAssignment: (id: number | string, updates: Partial<Assignment>) => void
-    addHabit: (habit: Omit<Habit, 'id'>) => void
-    toggleHabitCompletion: (habitId: number | string, dayIndex: number) => void
-    addGoal: (goal: Omit<Goal, 'id'>) => void
+    addAssignment: (assignment: Omit<Assignment, 'id' | 'created_at' | 'updated_at'>) => Promise<void>
+    addHabit: (habit: Omit<Habit, 'id' | 'created_at' | 'user_id'>) => Promise<void>
+    toggleHabitCompletion: (habitId: string, date: string) => Promise<void>
+    addGoal: (goal: Omit<Goal, 'id' | 'created_at' | 'updated_at'>) => Promise<void>
+    loading: boolean
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined)
@@ -57,133 +23,142 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const [assignments, setAssignments] = useState<Assignment[]>([])
     const [habits, setHabits] = useState<Habit[]>([])
     const [goals, setGoals] = useState<Goal[]>([])
+    const [loading, setLoading] = useState(false)
 
-    // Load from local storage on mount (fallback)
+    // Fetch all data when user logs in
     useEffect(() => {
-        const savedAssignments = localStorage.getItem('assignments')
-        const savedHabits = localStorage.getItem('habits')
-        const savedGoals = localStorage.getItem('goals')
+        if (user?.id) {
+            fetchAllData()
+        } else {
+            // Clear data when user logs out
+            setAssignments([])
+            setHabits([])
+            setGoals([])
+        }
+    }, [user?.id])
 
-        if (savedAssignments) setAssignments(JSON.parse(savedAssignments))
-        if (savedHabits) setHabits(JSON.parse(savedHabits))
-        if (savedGoals) setGoals(JSON.parse(savedGoals))
-    }, [])
+    const fetchAllData = async () => {
+        if (!user?.id) return
 
-    // Save to local storage whenever state changes
-    useEffect(() => {
-        localStorage.setItem('assignments', JSON.stringify(assignments))
-    }, [assignments])
+        setLoading(true)
+        try {
+            // Fetch assignments
+            const { data: assignmentsData } = await supabase
+                .from('assignments')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('due_date', { ascending: true })
 
-    useEffect(() => {
-        localStorage.setItem('habits', JSON.stringify(habits))
-    }, [habits])
+            // Fetch habits
+            const { data: habitsData } = await supabase
+                .from('habits')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('is_active', true)
 
-    useEffect(() => {
-        localStorage.setItem('goals', JSON.stringify(goals))
-    }, [goals])
+            // Fetch goals
+            const { data: goalsData } = await supabase
+                .from('goals')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
 
-    const addAssignment = async (assignment: Omit<Assignment, 'id'>) => {
-        const newAssignment: Assignment = { ...assignment, id: Date.now() }
-        setAssignments(prev => [...prev, newAssignment])
-
-        if (user && user._id) {
-            try {
-                // Map to API Task
-                const apiTask = {
-                    id: crypto.randomUUID(),
-                    title: assignment.title,
-                    dueDate: assignment.due,
-                    priority: assignment.priority.toUpperCase(),
-                    createdAt: new Date().toISOString()
-                }
-                await api.tasks.create(user._id, apiTask)
-            } catch (error) {
-                console.error("Failed to sync task", error)
-            }
+            if (assignmentsData) setAssignments(assignmentsData)
+            if (habitsData) setHabits(habitsData)
+            if (goalsData) setGoals(goalsData)
+        } catch (error) {
+            console.error('Error fetching data:', error)
+        } finally {
+            setLoading(false)
         }
     }
 
-    const updateAssignment = (id: number | string, updates: Partial<Assignment>) => {
-        setAssignments(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a))
-    }
+    const addAssignment = async (assignment: Omit<Assignment, 'id' | 'created_at' | 'updated_at'>) => {
+        if (!user?.id) return
 
-    const addHabit = async (habit: Omit<Habit, 'id'>) => {
-        const today = new Date()
-        const weekId = today.getFullYear() + '-' + (today.getMonth() + 1)
-        const initialWeekData = [false, false, false, false, false, false, false]
+        try {
+            const { data, error } = await supabase
+                .from('assignments')
+                .insert([{ ...assignment, user_id: user.id }])
+                .select()
+                .single()
 
-        const newHabit: Habit = {
-            ...habit,
-            id: Date.now(),
-            weekData: {
-                [weekId]: initialWeekData
-            }
-        }
-        setHabits(prev => [...prev, newHabit])
-
-        if (user && user._id) {
-            try {
-                // Map to API Habit
-                // API expects: name, icon, goal (string), category, weekData (object)
-                const apiWeekData = {
-                    monday: false, tuesday: false, wednesday: false, thursday: false, friday: false, saturday: false, sunday: false
-                }
-                const apiHabit = {
-                    name: habit.name,
-                    icon: habit.icon,
-                    goal: `Daily goal: ${habit.goal} times`, // Generating description from number
-                    category: habit.category || 'Fitness', // Default to Fitness if missing
-                    weekData: apiWeekData
-                }
-                await api.habits.create(user._id, apiHabit)
-            } catch (error) {
-                console.error("Failed to sync habit", error)
-            }
+            if (error) throw error
+            if (data) setAssignments(prev => [...prev, data])
+        } catch (error) {
+            console.error('Error adding assignment:', error)
         }
     }
 
-    const toggleHabitCompletion = (habitId: number | string, dayIndex: number) => {
-        setHabits(prev => prev.map(h => {
-            if (h.id !== habitId) return h
+    const addHabit = async (habit: Omit<Habit, 'id' | 'created_at' | 'user_id'>) => {
+        if (!user?.id) return
 
-            const today = new Date()
-            const weekId = today.getFullYear() + '-' + (today.getMonth() + 1)
-            const currentWeekData = h.weekData?.[weekId] || [false, false, false, false, false, false, false]
+        try {
+            const { data, error } = await supabase
+                .from('habits')
+                .insert([{ ...habit, user_id: user.id }])
+                .select()
+                .single()
 
-            const newWeekData = [...currentWeekData]
-            newWeekData[dayIndex] = !newWeekData[dayIndex]
-
-            const newCompleted = newWeekData[dayIndex] ? h.completed + 1 : h.completed - 1
-
-            return {
-                ...h,
-                completed: newCompleted < 0 ? 0 : newCompleted,
-                weekData: {
-                    ...h.weekData,
-                    [weekId]: newWeekData
-                }
-            }
-        }))
+            if (error) throw error
+            if (data) setHabits(prev => [...prev, data])
+        } catch (error) {
+            console.error('Error adding habit:', error)
+        }
     }
 
-    const addGoal = async (goal: Omit<Goal, 'id'>) => {
-        const newGoal: Goal = { ...goal, id: Date.now().toString(), progress: 0 }
-        setGoals(prev => [...prev, newGoal])
+    const toggleHabitCompletion = async (habitId: string, date: string) => {
+        if (!user?.id) return
 
-        if (user && user._id) {
-            try {
-                // Map to API Goal
-                // API expects: title, description, target, timeframe
-                const apiGoal = {
-                    title: goal.title,
-                    description: goal.description || `Goal for ${goal.category}`,
-                    target: goal.target || 100,
-                    timeframe: goal.deadline // Use deadline as timeframe
-                }
-                await api.goals.create(user._id, apiGoal)
-            } catch (error) {
-                console.error("Failed to sync goal", error)
+        try {
+            // Check if completion exists
+            const { data: existing } = await supabase
+                .from('habit_completions')
+                .select('*')
+                .eq('habit_id', habitId)
+                .eq('completion_date', date)
+                .single()
+
+            if (existing) {
+                // Toggle completion
+                const { error } = await supabase
+                    .from('habit_completions')
+                    .update({ is_completed: !existing.is_completed })
+                    .eq('id', existing.id)
+
+                if (error) throw error
+            } else {
+                // Create new completion
+                const { error } = await supabase
+                    .from('habit_completions')
+                    .insert([{
+                        habit_id: habitId,
+                        user_id: user.id,
+                        completion_date: date,
+                        is_completed: true
+                    }])
+
+                if (error) throw error
             }
+        } catch (error) {
+            console.error('Error toggling habit:', error)
+        }
+    }
+
+    const addGoal = async (goal: Omit<Goal, 'id' | 'created_at' | 'updated_at'>) => {
+        if (!user?.id) return
+
+        try {
+            const { data, error } = await supabase
+                .from('goals')
+                .insert([{ ...goal, user_id: user.id }])
+                .select()
+                .single()
+
+            if (error) throw error
+            if (data) setGoals(prev => [...prev, data])
+        } catch (error) {
+            console.error('Error adding goal:', error)
         }
     }
 
@@ -193,20 +168,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             habits,
             goals,
             addAssignment,
-            updateAssignment,
             addHabit,
             toggleHabitCompletion,
-            addGoal
+            addGoal,
+            loading
         }}>
             {children}
         </DataContext.Provider>
     )
 }
 
-export function useData() {
+export const useData = () => {
     const context = useContext(DataContext)
-    if (context === undefined) {
-        throw new Error('useData must be used within a DataProvider')
-    }
+    if (!context) throw new Error('useData must be used within DataProvider')
     return context
 }

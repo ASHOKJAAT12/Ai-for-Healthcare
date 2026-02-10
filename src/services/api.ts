@@ -1,6 +1,6 @@
 'use client'
 
-const BASE_URL = 'https://focused-expression-production-e6b3.up.railway.app';
+const BASE_URL = 'https://jrsecggocmeqltzkwuvk.supabase.co';
 
 export const api = {
     auth: {

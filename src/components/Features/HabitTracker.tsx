@@ -44,7 +44,7 @@ export default function HabitTracker() {
       name: newHabit.name,
       goal: newHabit.goal,
       icon: newHabit.icon,
-      completed: 0
+      is_active: true
     })
     setIsAddHabitOpen(false)
     setNewHabit({ name: '', goal: 1, icon: '🎯' })

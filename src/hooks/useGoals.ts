@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from '@/lib/api-client';
-import { GoalData } from '@/types';
+import { GoalData } from '@/types/database';
 
 export const useGoals = () => {
   const [loading, setLoading] = useState(false);

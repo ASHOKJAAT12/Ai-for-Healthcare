@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, GoalData, HabitData } from '@/types';
+import { User, GoalData, HabitData } from '@/types/database';
 import { mockAuth } from './mock-auth';
 
 // Use the environment variable for the base link
